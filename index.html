@@ -2,16 +2,25 @@
 <html>
 <head>
     <title>Our Private Movie Night</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
 <body>
-    <h1>🎬 Our Private Stream</h1>
-    <video id="shared-video" controls width="800">
-        <source src="YOUR_VIDEO_URL.mp4" type="video/mp4">
-        Your browser doesn't support HTML5 video.
-    </video>
-    <p>Share this link with your girlfriend!</p>
+    <div class="container">
+        <h1>🌟 Our Private Cinema 🌟</h1>
+        <div class="video-wrapper">
+            <video id="shared-video" controls>
+                <!-- REPLACE THIS WITH YOUR MOVIE LINK -->
+                <source src="https://example.com/our-movie.mp4" type="video/mp4">
+                Your browser doesn't support HTML5 video.
+            </video>
+        </div>
+        <div class="controls">
+            <p id="room-id">Room ID: Loading...</p>
+            <button id="fullscreen">Fullscreen</button>
+        </div>
+    </div>
     <script src="script.js"></script>
 </body>
 </html>
