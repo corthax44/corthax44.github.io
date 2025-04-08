@@ -1,53 +1,105 @@
-// Initialize PeerJS connection
+// Initialize PeerJS
 const peer = new Peer();
-const video = document.getElementById('shared-video');
-let conn;
+const iframe = document.getElementById('shared-browser');
+const urlInput = document.getElementById('url-input');
+const goBtn = document.getElementById('go-btn');
+const roomIdDisplay = document.getElementById('room-id');
+const statusDisplay = document.getElementById('status');
 
-// Generate a simple room ID
+// Generate room ID
 const roomId = Math.random().toString(36).substring(2, 6);
-document.getElementById('room-id').textContent = `Room ID: ${roomId}`;
+roomIdDisplay.textContent = roomId;
 
-// Fullscreen button
-document.getElementById('fullscreen').addEventListener('click', () => {
-    if (video.requestFullscreen) {
-        video.requestFullscreen();
+let conn;
+let isHost = false;
+
+// Initialize connection
+function initConnection() {
+    isHost = confirm("Are you the host? (Click OK to create room)");
+    
+    if (isHost) {
+        peer.on('connection', (connection) => {
+            conn = connection;
+            setupConnection();
+            statusDisplay.textContent = "Partner connected!";
+        });
+        statusDisplay.textContent = "Waiting for partner...";
+    } else {
+        const hostId = prompt("Enter host's Room ID:");
+        if (hostId) {
+            conn = peer.connect(hostId);
+            setupConnection();
+            statusDisplay.textContent = "Connecting...";
+        }
     }
-});
-
-// Host (first person to load)
-if (confirm("Are you starting the stream? (Click OK if you're the host)")) {
-    peer.on('connection', (connection) => {
-        conn = connection;
-        setupConnection();
-    });
-} 
-// Viewer (second person)
-else {
-    const hostId = prompt("Enter the Host's Room ID:");
-    conn = peer.connect(hostId);
-    setupConnection();
 }
 
+// Setup connection handlers
 function setupConnection() {
     conn.on('open', () => {
-        // Sync play/pause
-        video.addEventListener('play', () => {
-            conn.send({ type: 'play', time: video.currentTime });
-        });
+        statusDisplay.textContent = "Connected!";
         
-        video.addEventListener('pause', () => {
-            conn.send({ type: 'pause', time: video.currentTime });
+        // Send navigation events
+        iframe.addEventListener('load', () => {
+            if (isHost) {
+                conn.send({
+                    type: 'navigate',
+                    url: iframe.contentWindow.location.href
+                });
+            }
         });
     });
 
-    // Receive sync commands
+    // Receive data
     conn.on('data', (data) => {
-        if (data.type === 'play') {
-            video.currentTime = data.time;
-            video.play();
-        } else if (data.type === 'pause') {
-            video.currentTime = data.time;
-            video.pause();
+        switch(data.type) {
+            case 'navigate':
+                if (!isHost) {
+                    iframe.src = data.url;
+                }
+                break;
+            case 'click':
+                // Advanced: Could simulate clicks if needed
+                break;
         }
     });
 }
+
+// Load URL function
+function loadUrl(url) {
+    if (!url.startsWith('http')) {
+        url = 'https://' + url;
+    }
+    
+    try {
+        iframe.src = url;
+        statusDisplay.textContent = "Loading...";
+        
+        if (isHost && conn && conn.open) {
+            conn.send({
+                type: 'navigate',
+                url: url
+            });
+        }
+    } catch (e) {
+        statusDisplay.textContent = "Invalid URL";
+    }
+}
+
+// Go button handler
+goBtn.addEventListener('click', () => {
+    const url = urlInput.value.trim();
+    if (url) {
+        loadUrl(url);
+    }
+});
+
+// Enter key handler
+urlInput.addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') {
+        goBtn.click();
+    }
+});
+
+// Start connection
+initConnection();
