@@ -25,19 +25,23 @@ let conn;
 let isHost = false;
 let currentUrl = '';
 
-// Proxy configuration
+// Proxy configuration (updated list)
 const PROXY_SERVERS = [
-    'https://cors-anywhere.herokuapp.com/',
-    'https://api.allorigins.win/raw?url=',
-    'https://thingproxy.freeboard.io/fetch/'
+    'https://api.allorigins.win/raw?url=',      // Most reliable
+    'https://thingproxy.freeboard.io/fetch/',   // Good fallback
+    'https://corsproxy.io/?',                   // No auth needed
+    'https://yacdn.org/proxy/'                  // Last resort
 ];
+
+// Sites that will never work in iframes
 const BLOCKED_SITES = [
     'youtube.com',
     'netflix.com',
     'twitter.com',
     'instagram.com',
     'facebook.com',
-    'accounts.google.com' // Block login pages
+    'accounts.google.com',
+    'bankofamerica.com'
 ];
 
 // Generate room ID
@@ -103,11 +107,10 @@ favoriteBtns.forEach(btn => {
     }
 });
 
-// ========================
-// IMPROVED FUNCTIONS BELOW
-// ========================
+// ====================================
+// IMPROVED URL LOADER WITH PROXY SUPPORT
+// ====================================
 
-// Main URL loader with proxy support
 function loadUrl(url) {
     if (!url) return;
     
@@ -135,11 +138,11 @@ function loadUrl(url) {
 
         const proxyUrl = PROXY_SERVERS[proxyIndex] + encodeURIComponent(url);
         iframe.src = proxyUrl;
-        updateConnectionStatus(`Loading (proxy ${proxyIndex + 1})...`, 'fa-spinner fa-spin', 'connecting');
+        updateConnectionStatus(`Loading via ${getProxyName(proxyIndex)}...`, 'fa-spinner fa-spin', 'connecting');
 
         iframe.onload = iframe.onerror = () => {
-            // Check if page actually loaded
             try {
+                // Check if page actually loaded
                 if (iframe.contentDocument && iframe.contentDocument.URL !== 'about:blank') {
                     // Success!
                     updateConnectionStatus('Connected!', 'fa-link', 'connected');
@@ -148,22 +151,31 @@ function loadUrl(url) {
                     }
                 } else {
                     // Try next proxy
-                    proxyIndex++;
-                    tryProxy();
+                    proxyFail();
                 }
             } catch (e) {
-                proxyIndex++;
-                tryProxy();
+                proxyFail();
             }
         };
+
+        function proxyFail() {
+            proxyIndex++;
+            setTimeout(tryProxy, 500); // Add slight delay between attempts
+        }
     };
 
     tryProxy();
 }
 
-// ========================
-// ORIGINAL FUNCTIONS BELOW
-// ========================
+function getProxyName(index) {
+    const names = ['AllOrigins', 'ThingProxy', 'CorsProxy', 'Yacdn'];
+    return names[index] || `Proxy ${index + 1}`;
+}
+
+// ====================================
+// ALL YOUR ORIGINAL FUNCTIONS BELOW
+// (Identical to your previous version)
+// ====================================
 
 function generateRoomId() {
     return Math.random().toString(36).substring(2, 6);
