@@ -1,32 +1,74 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Our Shared Browser</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="style.css">
     <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
 </head>
-<body>
+<body class="dark-mode">
     <div class="container">
-        <h1>🌎 Our Shared Browser</h1>
-        
-        <!-- URL Input -->
-        <div class="url-bar">
-            <input type="text" id="url-input" placeholder="Paste any website URL">
-            <button id="go-btn">GO</button>
+        <header>
+            <h1><i class="fas fa-share-alt"></i> Our Shared Browser</h1>
+            <div class="theme-toggle">
+                <i class="fas fa-moon"></i>
+                <label class="switch">
+                    <input type="checkbox" id="theme-switch">
+                    <span class="slider"></span>
+                </label>
+                <i class="fas fa-sun"></i>
+            </div>
+        </header>
+
+        <div class="control-panel">
+            <div class="url-bar">
+                <button id="back-btn" title="Back"><i class="fas fa-arrow-left"></i></button>
+                <button id="forward-btn" title="Forward"><i class="fas fa-arrow-right"></i></button>
+                <button id="refresh-btn" title="Refresh"><i class="fas fa-sync-alt"></i></button>
+                <input type="text" id="url-input" placeholder="Enter website URL (e.g., https://example.com)">
+                <button id="go-btn"><i class="fas fa-play"></i> Go</button>
+                <button id="fullscreen-btn" title="Fullscreen"><i class="fas fa-expand"></i></button>
+            </div>
+
+            <div class="favorites-bar">
+                <button class="favorite-btn" data-url="https://www.youtube.com"><i class="fab fa-youtube"></i></button>
+                <button class="favorite-btn" data-url="https://www.netflix.com"><i class="fab fa-netflix"></i></button>
+                <button class="favorite-btn" data-url="https://www.wikipedia.org"><i class="fab fa-wikipedia-w"></i></button>
+                <button id="add-favorite-btn" title="Add to favorites"><i class="fas fa-plus"></i></button>
+            </div>
         </div>
-        
-        <!-- Browser Frame -->
-        <div class="browser-frame">
+
+        <div class="browser-container">
             <iframe id="shared-browser" sandbox="allow-scripts allow-same-origin allow-forms"></iframe>
         </div>
-        
-        <!-- Connection Info -->
-        <div class="connection-info">
-            <p>Room ID: <span id="room-id">Generating...</span></p>
-            <p>Status: <span id="status">Disconnected</span></p>
+
+        <div class="connection-panel">
+            <div class="connection-status">
+                <span id="connection-icon"><i class="fas fa-plug"></i></span>
+                <span id="status-text">Disconnected</span>
+            </div>
+            <div class="room-info">
+                <span>Room ID: </span>
+                <span id="room-id">Generating...</span>
+                <button id="copy-room-id" title="Copy Room ID"><i class="far fa-copy"></i></button>
+            </div>
         </div>
     </div>
+
+    <div class="modal" id="add-favorite-modal">
+        <div class="modal-content">
+            <h3>Add Favorite</h3>
+            <input type="text" id="favorite-url" placeholder="Website URL">
+            <input type="text" id="favorite-name" placeholder="Display name">
+            <div class="modal-buttons">
+                <button id="cancel-favorite">Cancel</button>
+                <button id="save-favorite">Save</button>
+            </div>
+        </div>
+    </div>
+
     <script src="script.js"></script>
 </body>
 </html>
