@@ -25,6 +25,21 @@ let conn;
 let isHost = false;
 let currentUrl = '';
 
+// Proxy configuration
+const PROXY_SERVERS = [
+    'https://cors-anywhere.herokuapp.com/',
+    'https://api.allorigins.win/raw?url=',
+    'https://thingproxy.freeboard.io/fetch/'
+];
+const BLOCKED_SITES = [
+    'youtube.com',
+    'netflix.com',
+    'twitter.com',
+    'instagram.com',
+    'facebook.com',
+    'accounts.google.com' // Block login pages
+];
+
 // Generate room ID
 const roomId = generateRoomId();
 roomIdDisplay.textContent = roomId;
@@ -88,7 +103,68 @@ favoriteBtns.forEach(btn => {
     }
 });
 
-// Functions
+// ========================
+// IMPROVED FUNCTIONS BELOW
+// ========================
+
+// Main URL loader with proxy support
+function loadUrl(url) {
+    if (!url) return;
+    
+    // Auto-add https:// if missing
+    if (!url.startsWith('http')) {
+        url = 'https://' + url;
+    }
+    
+    currentUrl = url;
+    urlInput.value = url;
+    
+    // Check for blocked sites
+    if (BLOCKED_SITES.some(site => url.includes(site))) {
+        updateConnectionStatus('Site blocks embedding', 'fa-ban', 'error');
+        return;
+    }
+
+    let proxyIndex = 0;
+    
+    const tryProxy = () => {
+        if (proxyIndex >= PROXY_SERVERS.length) {
+            updateConnectionStatus('All proxies failed', 'fa-exclamation-triangle', 'error');
+            return;
+        }
+
+        const proxyUrl = PROXY_SERVERS[proxyIndex] + encodeURIComponent(url);
+        iframe.src = proxyUrl;
+        updateConnectionStatus(`Loading (proxy ${proxyIndex + 1})...`, 'fa-spinner fa-spin', 'connecting');
+
+        iframe.onload = iframe.onerror = () => {
+            // Check if page actually loaded
+            try {
+                if (iframe.contentDocument && iframe.contentDocument.URL !== 'about:blank') {
+                    // Success!
+                    updateConnectionStatus('Connected!', 'fa-link', 'connected');
+                    if (isHost && conn && conn.open) {
+                        conn.send({ type: 'navigate', url: url });
+                    }
+                } else {
+                    // Try next proxy
+                    proxyIndex++;
+                    tryProxy();
+                }
+            } catch (e) {
+                proxyIndex++;
+                tryProxy();
+            }
+        };
+    };
+
+    tryProxy();
+}
+
+// ========================
+// ORIGINAL FUNCTIONS BELOW
+// ========================
+
 function generateRoomId() {
     return Math.random().toString(36).substring(2, 6);
 }
@@ -169,37 +245,6 @@ function updateConnectionStatus(text, icon, status) {
 function loadCurrentUrl() {
     const url = urlInput.value.trim();
     loadUrl(url);
-}
-
-function loadUrl(url) {
-    if (!url) return;
-    
-    // Add https:// if missing
-    if (!url.startsWith('http')) {
-        url = 'https://' + url;
-    }
-    
-    currentUrl = url;
-    urlInput.value = url;
-    
-    try {
-        iframe.src = url;
-        updateConnectionStatus('Loading...', 'fa-spinner fa-spin', 'connecting');
-        
-        if (isHost && conn && conn.open) {
-            conn.send({ type: 'navigate', url: url });
-        }
-        
-        // Reset status after 3 seconds
-        setTimeout(() => {
-            if (conn && conn.open) {
-                updateConnectionStatus('Connected!', 'fa-link', 'connected');
-            }
-        }, 3000);
-    } catch (e) {
-        console.error("Error loading URL:", e);
-        updateConnectionStatus('Load error', 'fa-exclamation-circle', 'error');
-    }
 }
 
 function toggleFullscreen() {
